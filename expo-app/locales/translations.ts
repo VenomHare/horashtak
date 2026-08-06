@@ -36,7 +36,11 @@ export const translations = {
     grahaShani: 'शनि',
     grahaGuru: 'गुरु',
     grahaMangal: 'मंगळ',
+    grahaRahu: 'राहू',
+    grahaKetu: 'केतू',
     theme: 'थीम',
+    rahuKetuSettings: 'राहू/केतू सेटिंग्स',
+    showRahuKetu: 'राहू आणि केतू दाखवा',
   },
   en: {
     appTitle: 'Horashtak',
@@ -75,7 +79,11 @@ export const translations = {
     grahaShani: 'Shani',
     grahaGuru: 'Guru',
     grahaMangal: 'Mangal',
+    grahaRahu: 'Rahu',
+    grahaKetu: 'Ketu',
     theme: 'Theme',
+    rahuKetuSettings: 'Rahu/Ketu Settings',
+    showRahuKetu: 'Show Rahu and Ketu',
   },
   hi: {
     appTitle: 'होराष्टक',
@@ -114,7 +122,11 @@ export const translations = {
     grahaShani: 'शनि',
     grahaGuru: 'गुरु',
     grahaMangal: 'मंगल',
+    grahaRahu: 'राहू',
+    grahaKetu: 'केतु',
     theme: 'थीम',
+    rahuKetuSettings: 'राहू/केतु सेटिंग्स',
+    showRahuKetu: 'राहू और केतु दिखाएं',
   },
 } as const;
 

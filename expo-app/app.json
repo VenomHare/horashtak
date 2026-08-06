@@ -1,10 +1,10 @@
 {
   "expo": {
     "name": "Horashtak",
-    "slug": "horashtak",
+    "slug": "hora-detector",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/logo-foreground.png",
     "scheme": "expoapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -17,9 +17,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#000000",
         "foregroundImage": "./assets/images/logo-foreground.png",
-        "backgroundImage": "./assets/images/logo-background.png",
         "monochromeImage": "./assets/images/logo-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
@@ -32,7 +31,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/logo.png"
+      "favicon": "./assets/images/logo-foreground.png"
     },
     "plugins": [
       "expo-router",

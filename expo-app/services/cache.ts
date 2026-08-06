@@ -1,15 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import type { HoraDay } from '@/lib/hora-detector';
+import { useAppStore } from '@/store/app-store';
 
 const CACHE_KEY = 'hora-day-cache';
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 
 type CachedHoraDay = {
   version: number;
   data: HoraDay;
   cachedAt: string;
   expiresAt: string;
+  showRahuKetu: boolean;
 };
 
 export async function getCachedHoraDay(): Promise<HoraDay | null> {
@@ -32,6 +34,13 @@ export async function getCachedHoraDay(): Promise<HoraDay | null> {
     const expiresAt = new Date(parsed.expiresAt);
     
     if (now >= expiresAt) {
+      await clearCachedHoraDay();
+      return null;
+    }
+
+    // Check if Rahu/Ketu setting matches
+    const currentShowRahuKetu = useAppStore.getState().showRahuKetu;
+    if (parsed.showRahuKetu !== currentShowRahuKetu) {
       await clearCachedHoraDay();
       return null;
     }
@@ -64,12 +73,14 @@ export async function setCachedHoraDay(day: HoraDay): Promise<void> {
   try {
     const now = new Date();
     const expiresAt = new Date(day.nextSunrise);
+    const showRahuKetu = useAppStore.getState().showRahuKetu;
 
     const cached: CachedHoraDay = {
       version: CACHE_VERSION,
       data: day,
       cachedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
+      showRahuKetu,
     };
 
     await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(cached));

@@ -100,7 +100,9 @@ function withAndroidHoraWidget(config) {
     android:id="@+id/hora_widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/hora_widget_background">
+    android:background="@drawable/hora_widget_background"
+    android:clickable="true"
+    android:focusable="true">
 
     <!-- Background Icon on the right side -->
     <TextView
@@ -113,15 +115,20 @@ function withAndroidHoraWidget(config) {
         android:alpha="0.15"
         android:gravity="end|center_vertical"
         android:paddingEnd="8dp"
-        android:fontFamily="sans-serif" />
+        android:fontFamily="sans-serif"
+        android:clickable="false"
+        android:focusable="false" />
 
     <!-- Main content -->
     <LinearLayout
+        android:id="@+id/hora_widget_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="center_vertical"
-        android:padding="12dp">
+        android:padding="12dp"
+        android:clickable="false"
+        android:focusable="false">
 
         <TextView
             android:id="@+id/hora_widget_title"
@@ -130,7 +137,9 @@ function withAndroidHoraWidget(config) {
             android:text="@string/hora_widget_title"
             android:textColor="#2A2119"
             android:textSize="11sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:clickable="false"
+            android:focusable="false" />
 
         <TextView
             android:id="@+id/hora_widget_hora"
@@ -140,7 +149,9 @@ function withAndroidHoraWidget(config) {
             android:text="@string/hora_widget_placeholder"
             android:textColor="#2A2119"
             android:textSize="28sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:clickable="false"
+            android:focusable="false" />
 
         <TextView
             android:id="@+id/hora_widget_time"
@@ -149,7 +160,9 @@ function withAndroidHoraWidget(config) {
             android:layout_marginTop="2dp"
             android:text="@string/hora_widget_time_placeholder"
             android:textColor="#806C55"
-            android:textSize="11sp" />
+            android:textSize="11sp"
+            android:clickable="false"
+            android:focusable="false" />
     </LinearLayout>
 </FrameLayout>
 `,
@@ -210,12 +223,15 @@ function withAndroidHoraWidget(config) {
       // Write HoraWidgetReceiver.kt
       const receiverContent = `package ${packageName}
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.widget.RemoteViews
 import ${packageName}.R
+import android.os.Build
 
 class HoraWidgetReceiver : AppWidgetProvider() {
     override fun onUpdate(
@@ -260,6 +276,26 @@ class HoraWidgetReceiver : AppWidgetProvider() {
             if (highlighted) {
                 views.setTextColor(R.id.hora_widget_time, Color.parseColor("#F0A51A"))
             }
+
+            // Create click intent to open app
+            val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+            val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                PendingIntent.getActivity(
+                    context,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            } else {
+                PendingIntent.getActivity(
+                    context,
+                    0,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            }
+            
+            views.setOnClickPendingIntent(R.id.hora_widget_root, pendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }

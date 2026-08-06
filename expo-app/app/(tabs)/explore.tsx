@@ -10,8 +10,10 @@ import { GRAHA_SEQUENCE, type Graha } from '@/lib/hora-detector';
 import { t, type AppLanguage } from '@/locales/translations';
 import { useAppStore } from '@/store/app-store';
 import { MaterialIcons } from '@expo/vector-icons';
-import { getCachedHoraDay } from '@/services/cache';
+import { getCachedHoraDay, clearCachedHoraDay } from '@/services/cache';
 import { refreshHoraNotifications } from '@/services/notifications';
+import { router } from 'expo-router';
+import { Collapsible } from '@/components/ui/collapsible';
 
 const languages: { label: string; value: AppLanguage }[] = [
   { label: 'मराठी', value: 'mr' },
@@ -111,6 +113,8 @@ export default function PersonalizeScreen() {
   const setStickyNotificationsEnabled = useAppStore((state) => state.setStickyNotificationsEnabled);
   const startAlerts = useAppStore((state) => state.startAlerts);
   const endAlerts = useAppStore((state) => state.endAlerts);
+  const showRahuKetu = useAppStore((state) => state.showRahuKetu);
+  const setShowRahuKetu = useAppStore((state) => state.setShowRahuKetu);
 
   // Refresh notifications when alert preferences change
   useEffect(() => {
@@ -123,6 +127,16 @@ export default function PersonalizeScreen() {
 
     updateNotifications();
   }, [startAlerts, endAlerts, language]);
+
+  // Recalculate when Rahu/Ketu setting changes
+  useEffect(() => {
+    const handleRahuKetuChange = async () => {
+      await clearCachedHoraDay();
+      router.replace('/'); // Navigate to home to trigger recalculation
+    };
+
+    handleRahuKetuChange();
+  }, [showRahuKetu]);
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.screen }]}>
@@ -152,9 +166,23 @@ export default function PersonalizeScreen() {
           </View>
         </Section>
 
+        <Section title={t(language, 'rahuKetuSettings')}>
+          <View style={[styles.stickyRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[styles.stickyText, { color: theme.text }]}>
+              {t(language, 'showRahuKetu')}
+            </Text>
+            <Switch
+              value={showRahuKetu}
+              onValueChange={setShowRahuKetu}
+            />
+          </View>
+        </Section>
+
         <Section title={t(language, 'highlightList')}>
           <View style={styles.chipGrid}>
-            {GRAHA_SEQUENCE.map((graha) => (
+            {GRAHA_SEQUENCE.filter(graha => 
+              showRahuKetu || (graha !== 'Rahu' && graha !== 'Ketu')
+            ).map((graha) => (
               <GrahaToggle
                 key={graha}
                 graha={graha}
@@ -166,17 +194,21 @@ export default function PersonalizeScreen() {
           </View>
         </Section>
 
-        <Section title={t(language, 'startAlerts')}>
-          {GRAHA_SEQUENCE.map((graha) => (
+        <Collapsible title={t(language, 'startAlerts')} defaultOpen={false}>
+          {GRAHA_SEQUENCE.filter(graha => 
+            showRahuKetu || (graha !== 'Rahu' && graha !== 'Ketu')
+          ).map((graha) => (
             <AlertRow key={`start-${graha}`} graha={graha} kind="start" />
           ))}
-        </Section>
+        </Collapsible>
 
-        <Section title={t(language, 'endAlerts')}>
-          {GRAHA_SEQUENCE.map((graha) => (
+        <Collapsible title={t(language, 'endAlerts')} defaultOpen={false}>
+          {GRAHA_SEQUENCE.filter(graha => 
+            showRahuKetu || (graha !== 'Rahu' && graha !== 'Ketu')
+          ).map((graha) => (
             <AlertRow key={`end-${graha}`} graha={graha} kind="end" />
           ))}
-        </Section>
+        </Collapsible>
 
         <Section title={t(language, 'theme')}>
           <View style={[styles.languageRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>

@@ -9,6 +9,8 @@ export const grahaSymbols: Record<Graha, string> = {
   Shani: '♄',
   Guru: '♃',
   Mangal: '♂',
+  Rahu: '☊',
+  Ketu: '☋',
 };
 
 export const grahaColors: Record<Graha, { background: string; foreground: string; soft: string }> = {
@@ -19,6 +21,8 @@ export const grahaColors: Record<Graha, { background: string; foreground: string
   Shani: { background: '#5C6370', foreground: '#F7F2E8', soft: '#E4E6EA' },
   Guru: { background: '#D28719', foreground: '#291800', soft: '#FFE5B5' },
   Mangal: { background: '#D84B35', foreground: '#FFF7EF', soft: '#FFE0D8' },
+  Rahu: { background: '#8B5CF6', foreground: '#1F0835', soft: '#EDE9FE' },
+  Ketu: { background: '#6366F1', foreground: '#1E1B4B', soft: '#E0E7FF' },
 };
 
 const grahaTranslationKeys: Record<Graha, TranslationKey> = {
@@ -29,6 +33,8 @@ const grahaTranslationKeys: Record<Graha, TranslationKey> = {
   Shani: 'grahaShani',
   Guru: 'grahaGuru',
   Mangal: 'grahaMangal',
+  Rahu: 'grahaRahu',
+  Ketu: 'grahaKetu',
 };
 
 export function getGrahaName(graha: Graha, language: AppLanguage) {

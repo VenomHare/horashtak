@@ -57,5 +57,7 @@ export async function syncWidgetSnapshot(
     } catch (e) {
       console.warn('Failed to sync native widget:', e);
     }
+  } else {
+    console.log('Widget sync skipped - not on Android or HoraWidgetModule not available');
   }
 }

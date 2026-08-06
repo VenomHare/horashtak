@@ -1,3 +1,15 @@
+// Base sequence for calculation (without Rahu/Ketu)
+const BASE_GRAHA_SEQUENCE = [
+  'Ravi',
+  'Shukra',
+  'Budh',
+  'Chandra',
+  'Shani',
+  'Guru',
+  'Mangal',
+] as const;
+
+// Full sequence including Rahu/Ketu for display when enabled
 export const GRAHA_SEQUENCE = [
   'Ravi',
   'Shukra',
@@ -6,6 +18,8 @@ export const GRAHA_SEQUENCE = [
   'Shani',
   'Guru',
   'Mangal',
+  'Rahu',
+  'Ketu',
 ] as const;
 
 export type Graha = (typeof GRAHA_SEQUENCE)[number];
@@ -57,11 +71,26 @@ function addMs(date: Date, ms: number) {
 }
 
 function getGrahaForPeriod(day: Date, periodIndex: number): Graha {
-  return GRAHA_SEQUENCE[(day.getDay() * 24 + periodIndex) % GRAHA_SEQUENCE.length];
+  return BASE_GRAHA_SEQUENCE[(day.getDay() * 24 + periodIndex) % BASE_GRAHA_SEQUENCE.length] as Graha;
 }
+
+// Dev mode flag - set to true to skip sunrise API and use hardcoded 6:00 AM
+export const DEV_MODE = false;
+
+// Hardcoded coordinates for dev mode (example: Mumbai)
+export const DEV_MODE_COORDINATES: Coordinates = {
+  latitude: 19.0760,
+  longitude: 72.8777,
+};
 
 export class HoraDetector {
   async getSunriseTime(coordinates: Coordinates, date = new Date()) {
+    // In dev mode, return hardcoded 6:00 AM
+    if (DEV_MODE) {
+      const dateKey = toDateKey(date);
+      return new Date(`${dateKey}T06:00`);
+    }
+
     const dateKey = toDateKey(date);
     const response = await fetch(
       `https://api.sunrisesunset.io/json?lat=${coordinates.latitude}&lng=${coordinates.longitude}&date=${dateKey}&time_format=24`,
@@ -80,7 +109,7 @@ export class HoraDetector {
     return new Date(`${dateKey}T${payload.results.sunrise}`);
   }
 
-  async getHoraDay(coordinates: Coordinates, now = new Date()): Promise<HoraDay> {
+  async getHoraDay(coordinates: Coordinates, now = new Date(), showRahuKetu = false): Promise<HoraDay> {
     const todaysSunrise = await this.getSunriseTime(coordinates, now);
     const usedDate = now.getTime() >= todaysSunrise.getTime() ? now : addDays(now, -1);
     const sunrise =
@@ -88,7 +117,7 @@ export class HoraDetector {
     const nextSunrise = await this.getSunriseTime(coordinates, addDays(usedDate, 1));
     const periodLength = (nextSunrise.getTime() - sunrise.getTime()) / 24;
 
-    const periods = Array.from({ length: 24 }, (_, index) => {
+    let periods = Array.from({ length: 24 }, (_, index) => {
       const start = addMs(sunrise, periodLength * index);
       const end = index === 23 ? nextSunrise : addMs(sunrise, periodLength * (index + 1));
 
@@ -102,6 +131,11 @@ export class HoraDetector {
       };
     });
 
+    // Insert Rahu and Ketu if enabled
+    if (showRahuKetu) {
+      periods = this.insertRahuKetu(periods, now);
+    }
+
     return {
       date: usedDate,
       sunrise,
@@ -109,6 +143,79 @@ export class HoraDetector {
       periods,
       current: periods.find((period) => period.isActive) ?? periods[0],
     };
+  }
+
+  private insertRahuKetu(periods: HoraPeriod[], now: Date): HoraPeriod[] {
+    const rahuKetuDuration = 12 * 60 * 1000; 
+
+    // Create a copy of periods to modify
+    const modifiedPeriods = periods.map(p => ({ ...p }));
+
+    // Find and modify Mangal → Ravi transition for Rahu insertion (all occurrences)
+    for (let i = 0; i < modifiedPeriods.length - 1; i++) {
+      const current = modifiedPeriods[i];
+      const next = modifiedPeriods[i + 1];
+
+      if (current.graha === 'Mangal' && next.graha === 'Ravi') {
+        // Adjust Mangal: end 12 minutes earlier
+        current.end = addMs(current.end, -rahuKetuDuration);
+        
+        // Adjust Ravi: start 12 minutes later
+        next.start = addMs(next.start, rahuKetuDuration);
+        
+        // Insert Rahu period (24 minutes total)
+        const rahuPeriod: HoraPeriod = {
+          index: 0, // Will be reindexed later
+          graha: 'Rahu',
+          start: current.end,
+          end: next.start,
+          isActive: now >= current.end && now < next.start,
+          isPast: now >= next.start,
+        };
+        
+        // Insert Rahu between Mangal and Ravi
+        modifiedPeriods.splice(i + 1, 0, rahuPeriod);
+        // Skip the newly inserted Rahu period in the next iteration
+        i++;
+      }
+    }
+
+    // Find and modify Shani → Guru transition for Ketu insertion (all occurrences)
+    for (let i = 0; i < modifiedPeriods.length - 1; i++) {
+      const current = modifiedPeriods[i];
+      const next = modifiedPeriods[i + 1];
+
+      if (current.graha === 'Shani' && next.graha === 'Guru') {
+        // Adjust Shani: end 12 minutes earlier
+        current.end = addMs(current.end, -rahuKetuDuration);
+        
+        // Adjust Guru: start 12 minutes later
+        next.start = addMs(next.start, rahuKetuDuration);
+        
+        // Insert Ketu period (24 minutes total)
+        const ketuPeriod: HoraPeriod = {
+          index: 0, // Will be reindexed later
+          graha: 'Ketu',
+          start: current.end,
+          end: next.start,
+          isActive: now >= current.end && now < next.start,
+          isPast: now >= next.start,
+        };
+        
+        // Insert Ketu between Shani and Guru
+        modifiedPeriods.splice(i + 1, 0, ketuPeriod);
+        // Skip the newly inserted Ketu period in the next iteration
+        i++;
+      }
+    }
+
+    // Reindex all periods and recalculate isActive/isPast
+    return modifiedPeriods.map((period, index) => ({
+      ...period,
+      index,
+      isActive: now >= period.start && now < period.end,
+      isPast: now >= period.end,
+    }));
   }
 }
 

@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { Platform } from 'react-native';
 
+import { DEV_MODE, DEV_MODE_COORDINATES } from '@/lib/hora-detector';
 import { useAppStore } from '@/store/app-store';
 
 type NotificationsModule = typeof import('expo-notifications');
@@ -19,6 +20,21 @@ async function getNotifications(): Promise<NotificationsModule | null> {
 }
 
 export async function syncPermissionState() {
+  // In dev mode, skip location permission check
+  if (DEV_MODE) {
+    const notificationsApi = await getNotifications();
+    const notifications = await notificationsApi?.getPermissionsAsync();
+
+    const permissions = {
+      locationGranted: true, // Auto-grant in dev mode
+      notificationsGranted:
+        !notificationsApi || notifications?.granted || notifications?.status === 'granted',
+    };
+
+    useAppStore.getState().setPermissions(permissions);
+    return permissions;
+  }
+
   const notificationsApi = await getNotifications();
   const [location, notifications] = await Promise.all([
     Location.getForegroundPermissionsAsync(),
@@ -47,13 +63,19 @@ export async function requestRequiredPermissions() {
     });
   }
 
-  const [location, notifications] = await Promise.all([
-    Location.requestForegroundPermissionsAsync(),
-    notificationsApi?.requestPermissionsAsync(),
-  ]);
+  // In dev mode, skip location permission request
+  let locationGranted = false;
+  if (DEV_MODE) {
+    locationGranted = true; // Auto-grant in dev mode
+  } else {
+    const location = await Location.requestForegroundPermissionsAsync();
+    locationGranted = location.status === Location.PermissionStatus.GRANTED;
+  }
+
+  const notifications = await notificationsApi?.requestPermissionsAsync();
 
   const permissions = {
-    locationGranted: location.status === Location.PermissionStatus.GRANTED,
+    locationGranted,
     notificationsGranted:
       !notificationsApi || notifications?.granted || notifications?.status === 'granted',
   };
@@ -63,6 +85,11 @@ export async function requestRequiredPermissions() {
 }
 
 export async function getCurrentCoordinates() {
+  // In dev mode, return hardcoded coordinates
+  if (DEV_MODE) {
+    return DEV_MODE_COORDINATES;
+  }
+
   const lastKnown = await Location.getLastKnownPositionAsync({
     maxAge: 1000 * 60 * 30,
     requiredAccuracy: 5000,

@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
 
-import { horaDetector, type HoraDay } from '@/lib/hora-detector';
+import { horaDetector } from '@/lib/hora-detector';
 import { setCachedHoraDay } from '@/services/cache';
 import { refreshHoraNotifications } from '@/services/notifications';
 import { syncWidgetSnapshot } from '@/services/widget-sync';
@@ -25,7 +25,8 @@ TaskManager.defineTask(HORA_RECALCULATION_TASK, async ({ error }) => {
 
     const coordinates = await getCurrentCoordinates();
     const now = new Date();
-    const horaDay = await horaDetector.getHoraDay(coordinates, now);
+    const showRahuKetu = useAppStore.getState().showRahuKetu;
+    const horaDay = await horaDetector.getHoraDay(coordinates, now, showRahuKetu);
 
     // Cache the new data
     await setCachedHoraDay(horaDay);
@@ -85,22 +86,16 @@ export async function scheduleBackgroundTasks() {
   if (Platform.OS === 'android' && Constants.appOwnership !== 'expo') {
     try {
       // Register hora recalculation task (runs every 30 minutes)
-      const isRecalcRegistered = await BackgroundTask.isTaskRegisteredAsync(HORA_RECALCULATION_TASK);
-      if (!isRecalcRegistered) {
-        await BackgroundTask.registerTaskAsync(HORA_RECALCULATION_TASK, {
-          minimumInterval: 30 * 60 * 1000, // 30 minutes
-        });
-        console.log('Registered hora recalculation task');
-      }
+      await BackgroundTask.registerTaskAsync(HORA_RECALCULATION_TASK, {
+        minimumInterval: 30 * 60 * 1000, // 30 minutes
+      });
+      console.log('Registered hora recalculation task');
 
       // Register widget update task (runs every 15 minutes)
-      const isWidgetRegistered = await BackgroundTask.isTaskRegisteredAsync(WIDGET_UPDATE_TASK);
-      if (!isWidgetRegistered) {
-        await BackgroundTask.registerTaskAsync(WIDGET_UPDATE_TASK, {
-          minimumInterval: 15 * 60 * 1000, // 15 minutes
-        });
-        console.log('Registered widget update task');
-      }
+      await BackgroundTask.registerTaskAsync(WIDGET_UPDATE_TASK, {
+        minimumInterval: 15 * 60 * 1000, // 15 minutes
+      });
+      console.log('Registered widget update task');
     } catch (error) {
       console.warn('Failed to register background tasks:', error);
     }
@@ -110,17 +105,11 @@ export async function scheduleBackgroundTasks() {
 export async function unregisterBackgroundTasks() {
   if (Platform.OS === 'android' && Constants.appOwnership !== 'expo') {
     try {
-      const isRecalcRegistered = await BackgroundTask.isTaskRegisteredAsync(HORA_RECALCULATION_TASK);
-      if (isRecalcRegistered) {
-        await BackgroundTask.unregisterTaskAsync(HORA_RECALCULATION_TASK);
-        console.log('Unregistered hora recalculation task');
-      }
+      await BackgroundTask.unregisterTaskAsync(HORA_RECALCULATION_TASK);
+      console.log('Unregistered hora recalculation task');
 
-      const isWidgetRegistered = await BackgroundTask.isTaskRegisteredAsync(WIDGET_UPDATE_TASK);
-      if (isWidgetRegistered) {
-        await BackgroundTask.unregisterTaskAsync(WIDGET_UPDATE_TASK);
-        console.log('Unregistered widget update task');
-      }
+      await BackgroundTask.unregisterTaskAsync(WIDGET_UPDATE_TASK);
+      console.log('Unregistered widget update task');
     } catch (error) {
       console.warn('Failed to unregister background tasks:', error);
     }

@@ -25,6 +25,7 @@ type AppState = {
   startAlerts: Partial<Record<Graha, AlertPreference>>;
   endAlerts: Partial<Record<Graha, AlertPreference>>;
   stickyNotificationsEnabled: boolean;
+  showRahuKetu: boolean;
   setHydrated: (value: boolean) => void;
   setPermissions: (permissions: PermissionState) => void;
   setLanguage: (language: AppLanguage) => void;
@@ -33,6 +34,7 @@ type AppState = {
   setAlertOffset: (kind: 'start' | 'end', graha: Graha, offsetMinutes: number) => void;
   setStickyNotificationsEnabled: (value: boolean) => void;
   setSelectedTheme: (value: Theme) => void,
+  setShowRahuKetu: (value: boolean) => void,
 };
 
 const defaultAlert: AlertPreference = {
@@ -58,6 +60,7 @@ export const useAppStore = create<AppState>()(
       startAlerts: {},
       endAlerts: {},
       stickyNotificationsEnabled: true,
+      showRahuKetu: false,
       setHydrated: (value) => set({ hasHydrated: value }),
       setPermissions: (permissions) => set({ permissions }),
       setLanguage: (language) => set({ language }),
@@ -92,7 +95,8 @@ export const useAppStore = create<AppState>()(
           };
         }),
       setStickyNotificationsEnabled: (value) => set({ stickyNotificationsEnabled: value }),
-      setSelectedTheme: (value) => set({ theme: value})
+      setSelectedTheme: (value) => set({ theme: value}),
+      setShowRahuKetu: (value) => set({ showRahuKetu: value })
     }),
     {
       name: 'hora-detector-store',
@@ -106,6 +110,7 @@ export const useAppStore = create<AppState>()(
         startAlerts: state.startAlerts,
         endAlerts: state.endAlerts,
         stickyNotificationsEnabled: state.stickyNotificationsEnabled,
+        showRahuKetu: state.showRahuKetu,
       }),
     },
   ),

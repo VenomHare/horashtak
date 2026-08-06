@@ -63,6 +63,7 @@ export default function HomeScreen() {
       }
 
       const coordinates = await getCurrentCoordinates();
+      const showRahuKetu = useAppStore.getState().showRahuKetu;
       
       // Try to use cached data if not forcing refresh
       if (!forceRefresh) {
@@ -76,7 +77,7 @@ export default function HomeScreen() {
       }
 
       // Calculate fresh data
-      const nextDay = await horaDetector.getHoraDay(coordinates);
+      const nextDay = await horaDetector.getHoraDay(coordinates, undefined, showRahuKetu);
       setDay(nextDay);
       await setCachedHoraDay(nextDay);
       await syncWidgetSnapshot(nextDay, highlightedHoras, language);
