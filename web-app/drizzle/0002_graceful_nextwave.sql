@@ -1,0 +1,1 @@
+ALTER TABLE "releases" DROP COLUMN "is_latest";

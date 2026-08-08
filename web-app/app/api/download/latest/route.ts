@@ -23,11 +23,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'User not approved' }, { status: 403 });
   }
 
-  // Get latest release using db (subject to RLS - public can read)
+  // Get latest production release using db (subject to RLS - public can read)
   const [latestRelease] = await db
     .select()
     .from(releases)
-    .where(eq(releases.isLatest, true))
+    .where(eq(releases.isProduction, true))
     .orderBy(desc(releases.createdAt))
     .limit(1);
 

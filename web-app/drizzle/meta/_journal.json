@@ -15,6 +15,13 @@
       "when": 1786206084375,
       "tag": "0001_rare_shard",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786212750647,
+      "tag": "0002_graceful_nextwave",
+      "breakpoints": true
     }
   ]
 }

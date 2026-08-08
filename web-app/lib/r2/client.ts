@@ -12,7 +12,7 @@ const r2Client = new S3Client({
 
 export const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
 
-export async function uploadToR2(key: string, body: Buffer, contentType: string) {
+export async function uploadToR2(key: string, body: Buffer | Uint8Array, contentType: string) {
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,

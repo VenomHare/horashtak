@@ -57,7 +57,6 @@ export const releases = pgTable('releases', {
   changelog: text('changelog'),
   releaseNotes: text('release_notes'),
   isProduction: boolean('is_production').default(false).notNull(),
-  isLatest: boolean('is_latest').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   createdBy: uuid('created_by').references(() => users.id),
 }, (table) => [

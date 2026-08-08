@@ -14,7 +14,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Only run Supabase middleware for download and admin routes
-  if (request.nextUrl.pathname.startsWith('/download') || 
+  if (request.nextUrl.pathname.startsWith('/download') ||
       request.nextUrl.pathname.startsWith('/admin') ||
       request.nextUrl.pathname.startsWith('/api/auth')) {
     const supabase = createServerClient(
@@ -45,6 +45,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Match all paths except static files and specific exclusions
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$|api/admin/releases).*)',
   ],
 };

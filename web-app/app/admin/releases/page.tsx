@@ -20,7 +20,6 @@ interface Release {
   changelog: string | null;
   releaseNotes: string | null;
   isProduction: boolean;
-  isLatest: boolean;
   createdAt: string;
 }
 
@@ -34,7 +33,6 @@ export default function ReleasesPage() {
     changelog: '',
     releaseNotes: '',
     isProduction: false,
-    isLatest: false,
   });
   const [file, setFile] = useState<File | null>(null);
 
@@ -67,7 +65,6 @@ export default function ReleasesPage() {
     formDataToSend.append('changelog', formData.changelog);
     formDataToSend.append('releaseNotes', formData.releaseNotes);
     formDataToSend.append('isProduction', formData.isProduction.toString());
-    formDataToSend.append('isLatest', formData.isLatest.toString());
 
     try {
       const response = await fetch('/api/admin/releases', {
@@ -77,7 +74,7 @@ export default function ReleasesPage() {
 
       if (response.ok) {
         setDialogOpen(false);
-        setFormData({ version: '', changelog: '', releaseNotes: '', isProduction: false, isLatest: false });
+        setFormData({ version: '', changelog: '', releaseNotes: '', isProduction: false });
         setFile(null);
         fetchReleases();
       } else {
@@ -181,14 +178,6 @@ export default function ReleasesPage() {
                 />
                 <Label htmlFor="isProduction">Production Release</Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isLatest"
-                  checked={formData.isLatest}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isLatest: checked })}
-                />
-                <Label htmlFor="isLatest">Latest Release</Label>
-              </div>
               <Button type="submit" disabled={uploading} className="w-full">
                 {uploading ? 'Uploading...' : 'Upload Release'}
               </Button>
@@ -206,7 +195,6 @@ export default function ReleasesPage() {
                 <TableHead>File Name</TableHead>
                 <TableHead>Size</TableHead>
                 <TableHead>Production</TableHead>
-                <TableHead>Latest</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -218,7 +206,6 @@ export default function ReleasesPage() {
                   <TableCell>{release.fileName}</TableCell>
                   <TableCell>{formatFileSize(release.fileSize)}</TableCell>
                   <TableCell>{release.isProduction ? '✓' : '-'}</TableCell>
-                  <TableCell>{release.isLatest ? '✓' : '-'}</TableCell>
                   <TableCell>{new Date(release.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Button

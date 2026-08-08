@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { Shield, ShieldCheck, ShieldX } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Shield, ShieldCheck, ShieldX, Plus } from 'lucide-react';
 
 interface User {
   id: string;
@@ -20,6 +23,11 @@ interface User {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserIsAdmin, setNewUserIsAdmin] = useState(false);
+  const [newUserIsApproved, setNewUserIsApproved] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -75,6 +83,35 @@ export default function UsersPage() {
     }
   };
 
+  const handleAddUser = async () => {
+    try {
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUserEmail,
+          name: newUserName,
+          isAdmin: newUserIsAdmin,
+          isApproved: newUserIsApproved,
+        }),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        setIsAddDialogOpen(false);
+        setNewUserEmail('');
+        setNewUserName('');
+        setNewUserIsAdmin(false);
+        setNewUserIsApproved(false);
+      } else {
+        const error = await response.json();
+        alert(`Failed to add user: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      alert('Failed to add user');
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-64">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
@@ -83,7 +120,62 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Users</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900">Users</h2>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add User
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New User</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  placeholder="user@example.com"
+                />
+              </div>
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isAdmin"
+                  checked={newUserIsAdmin}
+                  onCheckedChange={setNewUserIsAdmin}
+                />
+                <Label htmlFor="isAdmin">Admin</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isApproved"
+                  checked={newUserIsApproved}
+                  onCheckedChange={setNewUserIsApproved}
+                />
+                <Label htmlFor="isApproved">Approved</Label>
+              </div>
+              <Button onClick={handleAddUser} className="w-full">
+                Add User
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <Card>
         <CardContent className="p-0">

@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Handle authentication manually since middleware is skipped for file uploads
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -54,24 +55,23 @@ export async function POST(request: NextRequest) {
   const changelog = formData.get('changelog') as string;
   const releaseNotes = formData.get('releaseNotes') as string;
   const isProduction = formData.get('isProduction') === 'true';
-  const isLatest = formData.get('isLatest') === 'true';
 
   if (!file || !version) {
     return NextResponse.json({ error: 'File and version are required' }, { status: 400 });
   }
 
   try {
-    // Upload file to R2
-    const buffer = Buffer.from(await file.arrayBuffer());
+    // Upload file to R2 - convert to Buffer to avoid streaming hash calculation issues
     const r2Key = `releases/${version}/${file.name}`;
-    await uploadToR2(r2Key, buffer, 'application/vnd.android.package-archive');
+    const fileBuffer = await file.arrayBuffer();
+    await uploadToR2(r2Key, Buffer.from(fileBuffer), 'application/vnd.android.package-archive');
 
-    // If this is marked as latest, unmark other releases using adminDb to bypass RLS
-    if (isLatest) {
+    // If this is marked as production, unmark other releases using adminDb to bypass RLS
+    if (isProduction) {
       await adminDb
         .update(releases)
-        .set({ isLatest: false })
-        .where(eq(releases.isLatest, true));
+        .set({ isProduction: false })
+        .where(eq(releases.isProduction, true));
     }
 
     // Create release record using adminDb to bypass RLS
@@ -80,12 +80,11 @@ export async function POST(request: NextRequest) {
       .values({
         version,
         fileName: file.name,
-        fileSize: file.size,
+        fileSize: Number(file.size),
         r2Key,
         changelog: changelog || null,
         releaseNotes: releaseNotes || null,
         isProduction,
-        isLatest,
         createdBy: user.id,
       })
       .returning();

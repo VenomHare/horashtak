@@ -6,18 +6,19 @@ import { createClient } from '@/lib/supabase/client';
 import { Download, Lock, LogOut, User, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect } from 'react';
+import { debug } from '@/lib/debug';
 
 export default function DownloadPage() {
   const { user, customUser, loading, signOut } = useAuth();
   const supabase = createClient();
 
   useEffect(() => {
-    console.log('Download page state:', { user: !!user, customUser: !!customUser, loading });
-    console.log('Current URL:', window.location.href);
+    debug.log('Download page state:', { user: !!user, customUser: !!customUser, loading });
+    debug.log('Current URL:', window.location.href);
   }, [user, customUser, loading]);
 
   const handleGoogleLogin = async () => {
-    console.log('Initiating Google login');
+    debug.log('Initiating Google login');
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

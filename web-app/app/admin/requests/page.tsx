@@ -40,18 +40,19 @@ export default function RequestsPage() {
     }
   };
 
-  const handleApprove = async (requestId: string, userId: string) => {
+  const handleApprove = async (requestId: string) => {
     try {
       const response = await fetch(`/api/admin/requests/${requestId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'approved', userId }),
+        body: JSON.stringify({ status: 'approved' }),
       });
 
       if (response.ok) {
         fetchRequests();
       } else {
-        alert('Approval failed');
+        const error = await response.json();
+        alert(`Approval failed: ${error.error || 'Unknown error'}`);
       }
     } catch (error) {
       alert('Approval failed');
@@ -123,7 +124,7 @@ export default function RequestsPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleApprove(request.id, request.userId)}
+                          onClick={() => handleApprove(request.id)}
                         >
                           <Check className="h-4 w-4 text-green-600" />
                         </Button>

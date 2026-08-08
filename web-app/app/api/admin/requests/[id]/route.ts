@@ -7,10 +7,11 @@ import { eq } from 'drizzle-orm';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { id } = await params;
 
   if (!user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -26,9 +27,18 @@ export async function PATCH(
   }
 
   const body = await request.json();
-  const { status, userId } = body;
+  const { status } = body;
 
   try {
+    // First get the request to find the userId
+    const requestRecord = await adminDb.query.accessRequests.findFirst({
+      where: eq(accessRequests.id, id),
+    });
+
+    if (!requestRecord) {
+      return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    }
+
     // Update request status using admin client
     const [updatedRequest] = await adminDb
       .update(accessRequests)
@@ -37,15 +47,15 @@ export async function PATCH(
         reviewedAt: new Date(),
         reviewedBy: user.id,
       })
-      .where(eq(accessRequests.id, params.id))
+      .where(eq(accessRequests.id, id))
       .returning();
 
     // If approved, also update user's approval status using admin client
-    if (status === 'approved' && userId) {
+    if (status === 'approved' && requestRecord.userId) {
       await adminDb
         .update(users)
         .set({ isApproved: true })
-        .where(eq(users.id, userId));
+        .where(eq(users.id, requestRecord.userId));
     }
 
     return NextResponse.json(updatedRequest);

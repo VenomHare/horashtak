@@ -8,10 +8,11 @@ import { deleteFromR2 } from '@/lib/r2/client';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { id } = await params;
 
   if (!user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -28,7 +29,7 @@ export async function DELETE(
 
   // Get release
   const release = await db.query.releases.findFirst({
-    where: eq(releases.id, params.id),
+    where: eq(releases.id, id),
   });
 
   if (!release) {
@@ -40,7 +41,7 @@ export async function DELETE(
     await deleteFromR2(release.r2Key);
 
     // Delete from database using admin client
-    await adminDb.delete(releases).where(eq(releases.id, params.id));
+    await adminDb.delete(releases).where(eq(releases.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

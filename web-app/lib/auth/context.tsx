@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { User as CustomUser } from '@/lib/db/schema';
+import { debug } from '@/lib/debug';
 
 interface AuthContextType {
   user: User | null;
@@ -25,24 +26,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const getUser = async () => {
-      console.log('Auth context: Getting user');
+      debug.log('Auth context: Getting user');
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('Auth context: Supabase user:', user);
+      debug.log('Auth context: Supabase user:', user);
       setUser(user);
 
       if (user) {
         // Fetch custom user data
-        console.log('Auth context: Fetching custom user data');
+        debug.log('Auth context: Fetching custom user data');
         setCustomUserLoading(true);
         const response = await fetch('/api/auth/user');
-        console.log('Auth context: Custom user response status:', response.status);
+        debug.log('Auth context: Custom user response status:', response.status);
         if (response.ok) {
           const userData = await response.json();
-          console.log('Auth context: Custom user data:', userData);
+          debug.log('Auth context: Custom user data:', userData);
           setCustomUser(userData);
         } else {
           const error = await response.json();
-          console.error('Auth context: Failed to fetch custom user:', error);
+          debug.error('Auth context: Failed to fetch custom user:', error);
         }
         setCustomUserLoading(false);
       } else {
@@ -56,13 +57,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth context: Auth state changed:', event, !!session?.user);
+        debug.log('Auth context: Auth state changed:', event, !!session?.user);
         setUser(session?.user ?? null);
         if (session?.user) {
-          console.log('Auth context: Fetching custom user after state change');
+          debug.log('Auth context: Fetching custom user after state change');
           setCustomUserLoading(true);
           fetch('/api/auth/user').then(res => res.json()).then(data => {
-            console.log('Auth context: Custom user data after state change:', data);
+            debug.log('Auth context: Custom user data after state change:', data);
             setCustomUser(data);
             setCustomUserLoading(false);
           });

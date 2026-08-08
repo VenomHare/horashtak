@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     template: "%s | Horashtak",
   },
   description: "Find the current hora and daily planetary hour schedule. Secure APK distribution for approved users.",
+  icons: {
+    icon: "/logo.png",
+  },
   robots: {
     index: false,
     follow: false,
@@ -24,9 +27,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" >
-      <head>
-        <meta name="robots" content="noindex, nofollow" />
-      </head>
       <body className={`font-sans antialiased`} suppressHydrationWarning>
         <LanguageProvider>{children}</LanguageProvider>
         <Analytics />

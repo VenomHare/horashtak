@@ -7,10 +7,11 @@ import { eq } from 'drizzle-orm';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { id } = await params;
 
   if (!user) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -35,7 +36,7 @@ export async function PATCH(
         ...(isAdmin !== undefined && { isAdmin }),
         ...(isApproved !== undefined && { isApproved }),
       })
-      .where(eq(users.id, params.id))
+      .where(eq(users.id, id))
       .returning();
 
     return NextResponse.json(updatedUser);
