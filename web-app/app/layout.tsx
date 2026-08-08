@@ -5,39 +5,15 @@ import "./globals.css"
 import { LanguageProvider } from "@/hooks/use-language"
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://hora-detector.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: {
     default: "Horashtak",
     template: "%s | Horashtak",
   },
-  description: "Find the current hora and daily planetary hour schedule.",
-  applicationName: "Horashtak",
-  appleWebApp: {
-    title: "Horashtak",
-  },
-  icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
-  },
-  openGraph: {
-    title: "Horashtak",
-    description: "Find the current hora and daily planetary hour schedule.",
-    siteName: "Horashtak",
-    images: [
-      {
-        url: "/logo.png",
-        width: 1254,
-        height: 1254,
-        alt: "Horashtak logo",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary",
-    title: "Horashtak",
-    description: "Find the current hora and daily planetary hour schedule.",
-    images: ["/logo.png"],
+  description: "Find the current hora and daily planetary hour schedule. Secure APK distribution for approved users.",
+  robots: {
+    index: false,
+    follow: false,
   },
 }
 
@@ -48,7 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" >
-      <body className={`font-sans antialiased`}>
+      <head>
+        <meta name="robots" content="noindex, nofollow" />
+      </head>
+      <body className={`font-sans antialiased`} suppressHydrationWarning>
         <LanguageProvider>{children}</LanguageProvider>
         <Analytics />
       </body>

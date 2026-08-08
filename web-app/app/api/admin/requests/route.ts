@@ -1,0 +1,34 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { db } from '@/lib/db/client';
+import { adminDb } from '@/lib/db/admin-client';
+import { users, accessRequests } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+
+export async function GET(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  }
+
+  // Check if user is admin using db (subject to RLS)
+  const customUser = await db.query.users.findFirst({
+    where: eq(users.id, user.id),
+  });
+
+  if (!customUser || !customUser.isAdmin) {
+    return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+  }
+
+  // Get all requests using adminDb to bypass RLS (admin needs to see all requests)
+  const allRequests = await adminDb.query.accessRequests.findMany({
+    with: {
+      user: true,
+    },
+    orderBy: (accessRequests, { desc }) => [desc(accessRequests.requestedAt)],
+  });
+
+  return NextResponse.json(allRequests);
+}
